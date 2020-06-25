@@ -22,6 +22,12 @@ parameters:
 - displayName: Applicaton name
   name: APP_NAME
   required: true
+- displayName: Repository url
+  name: REPO_URL
+  required: true
+- displayName: Repository reference
+  name: REPO_REF
+  value: master
 - description: Webhook secret
   from: '[a-zA-Z0-9]{8}'
   generate: expression
@@ -64,7 +70,8 @@ objects:
     source:
       type: "Git"
       git:
-        uri: https://github.com/hsaid4327/python-flask-example.git
+        uri: ${REPO_URL}
+        ref: ${REPO_REF}
     strategy:
       jenkinsPipelineStrategy:
         env:

@@ -191,9 +191,9 @@ case "$ARG_COMMAND" in
   esac
 
 function setup_projects() {
-  oc new-project $DEV_PROJECT   --display-name="$ARG_PROJECT_SUFFIX - Dev"
-  oc $ARG_OC_OPS new-project stage-$STAGE_PROJECT --display-name="$ARG_PROJECT_SUFFIX - Stage"
-  oc $ARG_OC_OPS new-project cicd-$CICD_PROJECT  --display-name="CI/CD"
+  oc new-project  $DEV_PROJECT   --display-name="$ARG_PROJECT_SUFFIX - Dev"
+  oc  new-project $STAGE_PROJECT --display-name="$ARG_PROJECT_SUFFIX - Stage"
+  oc  new-project $CICD_PROJECT  --display-name="CI/CD"
 
   sleep 2
 
@@ -201,7 +201,7 @@ function setup_projects() {
   oc policy add-role-to-group edit system:serviceaccounts:$CICD_PROJECT -n $STAGE_PROJECT
 
   echo "Using template $template"
-  oc new-app -f $template -p DEV_PROJECT=$DEV_PROJECT -p STAGE_PROJECT=$STAGE_PROJECT -p CICD_PROJECT=$CICD_PROJECT -p APP_NAME=$APP_NAME  -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -n cicd-$CICD_PROJECT
+  oc new-app -f $template -p DEV_PROJECT=$DEV_PROJECT -p STAGE_PROJECT=$STAGE_PROJECT -p CICD_PROJECT=$CICD_PROJECT -p APP_NAME=$APP_NAME  -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -p REPO_URL=$REPO_URL -p REPO_REF=$REPO_REF -n cicd-$CICD_PROJECT
 }
 
 function setup_applications() {
@@ -210,7 +210,7 @@ function setup_applications() {
 
     #cicd
     oc set resources dc/jenkins --limits=cpu=2,memory=4Gi --requests=cpu=1,memory=1Gi
-	oc label dc jenkins app=jenkins --overwrite
+	  oc label dc jenkins app=jenkins --overwrite
     oc create secret generic quay-cicd-secret --from-literal="username=$QUAY_USER" --from-literal="password=$QUAY_PASS" -n $CICD_PROJECT
     oc label secret quay-cicd-secret credential.sync.jenkins.openshift.io=true -n $CICD_PROJECT
 
@@ -236,7 +236,7 @@ function setup_applications() {
     oc secrets link default quay-secret --for=pull -n $STAGE_PROJECT
     oc set probe dc/tasks --readiness --get-url=http://:8080/hello --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10 -n $STAGE_PROJECT
     oc set probe dc/tasks --liveness  --get-url=http://:8080 --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=10 -n $STAGE_PROJECT
-  	  oc rollout cancel dc/$APP_NAME -n $STAGE_PROJECT
+  	oc rollout cancel dc/$APP_NAME -n $STAGE_PROJECT
 
 
 }
