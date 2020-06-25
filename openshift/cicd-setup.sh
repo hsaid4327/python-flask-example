@@ -12,7 +12,7 @@ function usage() {
     echo " $0 --help"
     echo
     echo "Example:"
-    echo " $0 deploy --project-suffix mydemo --repo-url repourl --quary-username uname --quay-password quaypasswd"
+    echo " $0 deploy --project-suffix mydemo --appname=appname --repo-url repourl --repo-reference=master --quary-username uname --quay-password quaypasswd --app-name=appname "
     echo
     echo "COMMANDS:"
     echo "   deploy                   Set up the demo projects and deploy demo apps"
@@ -160,35 +160,6 @@ QUAY_USER=$ARG_QUAY_USER
 QUAY_PASS=$ARG_QUAY_PASS
 template="cisco-cicd-template.yaml"
 
-START=`date +%s`
-
-
-echo_header "OpenShift CI/CD Demo ($(date))"
-
-case "$ARG_COMMAND" in
-    delete)
-        echo "Delete demo..."
-        oc delete project $DEV_PROJECT $STAGE_PROJECT $CICD_PROJECT
-        echo
-        echo "Delete completed successfully!"
-        ;;
-
-
-    deploy)
-        echo "Deploying demo..."
-        setup_projects
-        echo
-        echo "project setup completed successfully!"
-        echo "setting up application artifacts ......."
-        setup_applications
-        echo "setting up applications completed successfully"
-        ;;
-
-    *)
-        echo "Invalid command specified: '$ARG_COMMAND'"
-        usage
-        ;;
-  esac
 
 function setup_projects() {
   oc new-project  $DEV_PROJECT   --display-name="$ARG_PROJECT_SUFFIX - Dev"
@@ -251,10 +222,35 @@ function echo_header() {
 
 
 
+START=`date +%s`
 
 
+echo_header "OpenShift CI/CD Demo ($(date))"
+
+case "$ARG_COMMAND" in
+    delete)
+        echo "Delete demo..."
+        oc delete project $DEV_PROJECT $STAGE_PROJECT $CICD_PROJECT
+        echo
+        echo "Delete completed successfully!"
+        ;;
 
 
+    deploy)
+        echo "Deploying demo..."
+        setup_projects
+        echo
+        echo "project setup completed successfully!"
+        echo "setting up application artifacts ......."
+        setup_applications
+        echo "setting up applications completed successfully"
+        ;;
+
+    *)
+        echo "Invalid command specified: '$ARG_COMMAND'"
+        usage
+        ;;
+  esac
 
 
 END=`date +%s`
