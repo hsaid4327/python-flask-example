@@ -17,21 +17,24 @@ function usage() {
     echo "COMMANDS:"
     echo "   deploy                   Set up the demo projects and deploy demo apps"
     echo "   delete                   Clean up and remove demo projects and objects"
-    echo 
+    echo
     echo "OPTIONS:"
-    
-    echo "   --quay-username            required    quay.io username to push the images to a quay.io account. Required if --enable-quay is set"
-    echo "   --quay-password            required    quay.io password to push the images to a quay.io account. Required if --enable-quay is set"
- 
-    echo "   --repo-url                 required    The location url of the git repository of the application source code" 
+
+    echo "   --quay-username            required    quay.io username to push the images to a quay.io account."
+    echo "   --quay-password            required    quay.io password to push the images to a quay.io account."
+    echo "   --quay-repo                required    quay.io password to push the images to a quay.io account."
+    echo "   --app-name                required     application name for the deployment artifact and openshift resources."
+    echo "   --repo-url                 required    The location url of the git repository of the application source code"
+    echo "   --repo-reference           required    The branch of the source code repository"
     echo "   --project-suffix [suffix]  Optional    Suffix to be added to demo project names e.g. ci-SUFFIX. If empty, user will be used as suffix"
- 
+
 }
 
 ARG_PROJECT_SUFFIX=
 ARG_COMMAND=
 ARG_QUAY_USER=
 ARG_QUAY_PASS=
+ARG_QUAY_REPO=
 ARG_REPO_URL=
 ARG_REPO_REF=
 ARG_APP_NAME=
@@ -43,17 +46,17 @@ while :; do
     case $1 in
         deploy)
             ARG_COMMAND=deploy
-            if [ "$NUM_ARGS" -lt 6 ]; then
-              printf 'ERROR: "--the number of arguments cannot be less than 5 for deploy command" \n' >&2
+            if [ "$NUM_ARGS" -lt 8 ]; then
+              printf 'ERROR: "--the number of arguments cannot be less than 7 for deploy command" \n' >&2
               usage
               exit 255
-            fi            
+            fi
             ;;
         delete)
             ARG_COMMAND=delete
             ;;
-    
-        
+
+
         --project-suffix)
             if [ -n "$2" ]; then
                 ARG_PROJECT_SUFFIX=$2
@@ -64,7 +67,7 @@ while :; do
                 exit 255
             fi
             ;;
-        --arg-app-name)
+        --app-name)
             if [ -n "$2" ]; then
                 ARG_APP_NAME=$2
                 shift
@@ -73,8 +76,8 @@ while :; do
                 usage
                 exit 255
             fi
-            ;;              
-      
+            ;;
+
         --quay-username)
             if [ -n "$2" ]; then
                 ARG_QUAY_USER=$2
@@ -95,8 +98,17 @@ while :; do
                 exit 255
             fi
             ;;
-
-        --repo-url)
+            --quay-repo)
+                if [ -n "$2" ]; then
+                    ARG_QUAY_REPO=$2
+                    shift
+                else
+                    printf 'ERROR: "--quay-repo" requires a non-empty value.\n' >&2
+                    usage
+                    exit 255
+                fi
+                ;;
+          --repo-url)
             if [ -n "$2" ]; then
                 ARG_REPO_URL=$2
                 shift
@@ -105,19 +117,19 @@ while :; do
                 usage
                 exit 255
             fi
-            ;;           
+            ;;
          --repo-reference)
             if [ -n "$2" ]; then
                 ARG_REPO_REF=$2
                 shift
             else
-                printf 'ERROR: "--rrepo-reference" requires a non-empty value.\n' >&2
+                printf 'ERROR: "--repo-reference" requires a non-empty value.\n' >&2
                 usage
                 exit 255
             fi
-            ;;                      
-   
-      
+            ;;
+
+
         -h|--help)
             usage
             exit 0
@@ -136,19 +148,32 @@ while :; do
 
     shift
 done
+
+DEV_PROJECT=dev-$ARG_PROJECT_SUFFIX
+STAGE_PROJECT=stage-$ARG_PROJECT_SUFFIX
+CICD_PROJECT=cicd-$ARG_PROJECT_SUFFIX
+APP_NAME=$ARG_APP_NAME
+REPO_URL=$ARG_REPO_URL
+REPO_REF=$ARG_REPO_REF
+QUAY_REPO=$ARG_QUAY_REPO
+QUAY_USER=$ARG_QUAY_USER
+QUAY_PASS=$ARG_QUAY_PASS
+template="cisco-cicd-template.yaml"
+
 START=`date +%s`
+
 
 echo_header "OpenShift CI/CD Demo ($(date))"
 
 case "$ARG_COMMAND" in
     delete)
         echo "Delete demo..."
-        oc delete project dev-$ARG_PROJECT_SUFFIX stage-$ARG_PROJECT_SUFFIX cicd-$ARG_PROJECT_SUFFIX
+        oc delete project $DEV_PROJECT $STAGE_PROJECT $CICD_PROJECT
         echo
         echo "Delete completed successfully!"
         ;;
-      
- 
+
+
     deploy)
         echo "Deploying demo..."
         setup_projects
@@ -158,85 +183,62 @@ case "$ARG_COMMAND" in
         setup_applications
         echo "setting up applications completed successfully"
         ;;
-        
+
     *)
         echo "Invalid command specified: '$ARG_COMMAND'"
         usage
         ;;
-esac
+  esac
 
 function setup_projects() {
-  oc new-project dev-$ARG_PROJECT_SUFFIX   --display-name="$ARG_APP_NAME - Dev"
-  oc $ARG_OC_OPS new-project stage-$ARG_PROJECT_SUFFIX --display-name="$ARG_APP_NAME - Stage"
-  oc $ARG_OC_OPS new-project cicd-$ARG_PROJECT_SUFFIX  --display-name="CI/CD"
+  oc new-project $DEV_PROJECT   --display-name="$ARG_PROJECT_SUFFIX - Dev"
+  oc $ARG_OC_OPS new-project stage-$STAGE_PROJECT --display-name="$ARG_PROJECT_SUFFIX - Stage"
+  oc $ARG_OC_OPS new-project cicd-$CICD_PROJECT  --display-name="CI/CD"
 
   sleep 2
 
-  oc policy add-role-to-group edit system:serviceaccounts:cicd-$ARG_PROJECT_SUFFIX -n dev-$ARG_PROJECT_SUFFIX
-  oc policy add-role-to-group edit system:serviceaccounts:cicd-$ARG_PROJECT_SUFFIX -n stage-$ARG_PROJECT_SUFFIX
-  
-  local template=https://raw.githubusercontent.com/$GITHUB_ACCOUNT/openshift-cd-demo/$GITHUB_REF/cicd-template.yaml
+  oc policy add-role-to-group edit system:serviceaccounts:$CICD_PROJECT -n $DEV_PROJECT
+  oc policy add-role-to-group edit system:serviceaccounts:$CICD_PROJECT -n $STAGE_PROJECT
+
   echo "Using template $template"
-  oc $ARG_OC_OPS new-app -f $template -p DEV_PROJECT=dev-$ARG_PROJECT_SUFFIX -p STAGE_PROJECT=stage-$ARG_PROJECT_SUFFIX -p DEPLOY_CHE=$ARG_DEPLOY_CHE -p EPHEMERAL=$ARG_EPHEMERAL -p ENABLE_QUAY=$ARG_ENABLE_QUAY -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -n cicd-$ARG_PROJECT_SUFFIX 
+  oc new-app -f $template -p DEV_PROJECT=$DEV_PROJECT -p STAGE_PROJECT=$STAGE_PROJECT -p CICD_PROJECT=$CICD_PROJECT -p APP_NAME=$APP_NAME  -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -n cicd-$CICD_PROJECT
 }
 
 function setup_applications() {
-    oc new-app jenkins-ephemeral -n cicd-$ARG_PROJECT_SUFFIX
+    oc new-app jenkins-persistent -n $CICD_PROJECT
     sleep 2
- 
-    oc set resources dc/jenkins --limits=cpu=2,memory=2Gi --requests=cpu=100m,memory=512Mi 
-	oc label dc jenkins app=jenkins --overwrite 
-	
-	
-	# setup cisco-dev env
-	oc import-image jboss-eap72 --from=image-registry.openshift-image-registry.svc:5000/openshift/jboss-eap72-openshift --confirm --insecure --confirm -n dev-$ARG_PROJECT_SUFFIX 
-	
-	if [ "${ENABLE_QUAY}" == "true" ] ; then
-	  # cisco-cicd
-	  oc create secret generic quay-cicd-secret --from-literal="username=$ARG_QUAY_USER" --from-literal="password=$ARG_QUAY_PASS" -n cicd-$ARG_PROJECT_SUFFIX
-	  oc label secret quay-cicd-secret credential.sync.jenkins.openshift.io=true -n cicd-$ARG_PROJECT_SUFFIX
-	  
-	  # cisco-dev
-	  oc create secret docker-registry quay-cicd-secret --docker-server=quay.io --docker-username="$ARG_QUAY_USER" --docker-password="$ARG_QUAY_PASS" --docker-email=cicd@redhat.com -n dev-$ARG_PROJECT_SUFFIX
-	  oc new-build --name=tasks --image-stream=jboss-eap72:latest --binary=true --push-secret=quay-cicd-secret --to-docker --to='quay.io/$ARG_QUAY_USER/$QUAY_REPO:latest' -n dev-$ARG_PROJECT_SUFFIX
-	  oc new-app --name=tasks --docker-image=quay.io/$ARG_QUAY_USER/$QUAY_REPO:latest --allow-missing-images -n dev-$ARG_PROJECT_SUFFIX
-	  oc set triggers dc tasks --remove-all -n dev-$ARG_PROJECT_SUFFIX
-	  oc patch dc tasks -p '{"spec": {"template": {"spec": {"containers": [{"name": "tasks", "imagePullPolicy": "Always"}]}}}}' -n dev-$ARG_PROJECT_SUFFIX
-	  oc delete is tasks -n dev-$ARG_PROJECT_SUFFIX
-	  oc secrets link default quay-cicd-secret --for=pull -n dev-$ARG_PROJECT_SUFFIX
-	  
-	  # cisco-stage
-	  oc create secret docker-registry quay-cicd-secret --docker-server=quay.io --docker-username="$ARG_QUAY_USER" --docker-password="$ARG_QUAY_PASS" --docker-email=cicd@redhat.com -n stage-$ARG_PROJECT_SUFFIX
-	  oc new-app --name=tasks --docker-image=quay.io/$ARG_QUAY_USER/$QUAY_REPO:stage --allow-missing-images -n stage-$ARG_PROJECT_SUFFIX
-	  oc set triggers dc tasks --remove-all -n stage-$ARG_PROJECT_SUFFIX
-	  oc patch dc tasks -p '{"spec": {"template": {"spec": {"containers": [{"name": "tasks", "imagePullPolicy": "Always"}]}}}}' -n stage-$ARG_PROJECT_SUFFIX
-	  oc delete is tasks -n stage-$ARG_PROJECT_SUFFIX
-	  oc secrets link default quay-cicd-secret --for=pull -n stage-$ARG_PROJECT_SUFFIX
-	else
-	  # cisco-dev
-	  oc new-build --name=tasks --image-stream=jboss-eap72:latest --binary=true -n dev-$ARG_PROJECT_SUFFIX
-	  oc new-app tasks:latest --allow-missing-images -n dev-$ARG_PROJECT_SUFFIX
-	  oc set triggers dc -l app=tasks --containers=tasks --from-image=tasks:latest --manual -n dev-$ARG_PROJECT_SUFFIX
-	  
-	  # cisco-stage
-	  oc new-app tasks:stage --allow-missing-images -n stage-$ARG_PROJECT_SUFFIX
-	  oc set triggers dc -l app=tasks --containers=tasks --from-image=tasks:stage --manual -n stage-$ARG_PROJECT_SUFFIX
-	fi
-	
-	# cisco-dev project
-	
-	
-	oc set probe dc/tasks --readiness --get-url=http://:8080/ws/demo/healthcheck --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10 -n dev-$ARG_PROJECT_SUFFIX
-	oc set probe dc/tasks --liveness  --get-url=http://:8080/ws/demo/healthcheck --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=10 -n dev-$ARG_PROJECT_SUFFIX
-	oc rollout cancel dc/tasks -n dev-$ARG_PROJECT_SUFFIX
-	# cisco-stage project
-	
-	
-	oc set probe dc/tasks --readiness --get-url=http://:8080/ws/demo/healthcheck --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10 -n stage-$ARG_PROJECT_SUFFIX
-	oc set probe dc/tasks --liveness  --get-url=http://:8080/ws/demo/healthcheck --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=10 -n stage-$ARG_PROJECT_SUFFIX
-	oc rollout cancel dc/tasks -n stage-$ARG_PROJECT_SUFFIX 
 
-	
+    #cicd
+    oc set resources dc/jenkins --limits=cpu=2,memory=4Gi --requests=cpu=1,memory=1Gi
+	oc label dc jenkins app=jenkins --overwrite
+    oc create secret generic quay-cicd-secret --from-literal="username=$QUAY_USER" --from-literal="password=$QUAY_PASS" -n $CICD_PROJECT
+    oc label secret quay-cicd-secret credential.sync.jenkins.openshift.io=true -n $CICD_PROJECT
+
+
+
+	# setup cisco-dev env
+    oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username=$QUAY_USER --docker-password=$QUAY_PASS -n $DEV_PROJECT
+    oc new-build python~$REPO_URL --name=$APP_NAME --push-secret=quay-secret --to-docker --to="quay.io/hsaid4327/$APP_NAME" n $DEV_PROJECT
+    oc secrets link default quay-secret --for=pull -n $DEV_PROJECT
+    oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:latest --allow-missing-images -n $DEV_PROJECT
+    oc set triggers dc tasks --remove-all -n dev-$ARG_PROJECT_SUFFIX
+    oc patch dc $APP_NAME -p '{"spec": {"template": {"spec": {"containers": [{"name": "$APP_NAME", "imagePullPolicy": "Always"}]}}}}' -n $DEV_PROJECT
+    oc set probe dc/tasks --readiness --get-url=http://:8080/hello --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10 -n $DEV_PROJECT
+    oc set probe dc/tasks --liveness  --get-url=http://:8080 --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=10 -n $DEV_PROJECT
+	  oc rollout cancel dc/$APP_NAME -n $DEV_PROJECT
+
+    # cisco-stage
+    oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username="$QUAY_USER" --docker-password="$QUAY_PASS" -n $STAGE_PROJECT
+    oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:stage --allow-missing-images -n $STAGE_PROJECT
+    oc set triggers dc $APP_NAME --remove-all -n $STAGE_PROJECT
+    oc patch dc $APP_NAME -p '{"spec": {"template": {"spec": {"containers": [{"name": "$APP_NAME", "imagePullPolicy": "Always"}]}}}}' -n $STAGE_PROJECT
+    oc delete is $APP_NAME -n $STAGE_PROJECT
+    oc secrets link default quay-secret --for=pull -n $STAGE_PROJECT
+    oc set probe dc/tasks --readiness --get-url=http://:8080/hello --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10 -n $STAGE_PROJECT
+    oc set probe dc/tasks --liveness  --get-url=http://:8080 --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=10 -n $STAGE_PROJECT
+  	  oc rollout cancel dc/$APP_NAME -n $STAGE_PROJECT
+
+
 }
 
 function echo_header() {
@@ -257,4 +259,3 @@ function echo_header() {
 
 END=`date +%s`
 echo "(Completed in $(( ($END - $START)/60 )) min $(( ($END - $START)%60 )) sec)"
-
