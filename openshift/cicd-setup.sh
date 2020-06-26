@@ -192,6 +192,7 @@ function setup_applications() {
     oc new-build python~$REPO_URL --name=$APP_NAME --push-secret=quay-secret --to-docker --to="quay.io/hsaid4327/$APP_NAME" -n $DEV_PROJECT
     oc secrets link default quay-secret --for=pull -n $DEV_PROJECT
     oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:latest --allow-missing-images -n $DEV_PROJECT
+    oc expose svc $APP_NAME -n $DEV_PROJECT
     oc set triggers dc $APP_NAME --remove-all -n $DEV_PROJECT
     oc patch dc $APP_NAME -p '{"spec": {"template": {"spec": {"containers": [{"name": "$APP_NAME", "imagePullPolicy": "Always"}]}}}}' -n $DEV_PROJECT
     oc set probe dc/$APP_NAME --readiness --get-url=http://:8080/hello --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10 -n $DEV_PROJECT
@@ -201,6 +202,7 @@ function setup_applications() {
     # cisco-stage
     oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username="$QUAY_USER" --docker-password="$QUAY_PASS" -n $STAGE_PROJECT
     oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:stage --allow-missing-images -n $STAGE_PROJECT
+    oc expose svc $APP_NAME -n $STAGE_PROJECT
     oc set triggers dc $APP_NAME --remove-all -n $STAGE_PROJECT
     oc patch dc $APP_NAME -p '{"spec": {"template": {"spec": {"containers": [{"name": "$APP_NAME", "imagePullPolicy": "Always"}]}}}}' -n $STAGE_PROJECT
     oc delete is $APP_NAME -n $STAGE_PROJECT
