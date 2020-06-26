@@ -8,7 +8,7 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject(env.DEV_PROJECT) {
-              openshift.selector("bc", "env.APP_NAME").startBuild("--wait=true")
+              openshift.selector("bc", env.APP_NAME).startBuild("--wait=true")
             }
           }
         }
@@ -19,7 +19,7 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject(env.DEV_PROJECT) {
-              openshift.selector("dc", "env.APP_NAME").rollout().latest();
+              openshift.selector("dc", env.APP_NAME).rollout().latest();
             }
           }
         }
