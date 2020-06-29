@@ -172,7 +172,7 @@ function setup_projects() {
   oc policy add-role-to-group edit system:serviceaccounts:$CICD_PROJECT -n $STAGE_PROJECT
 
   echo "Using template $template"
-  oc process -f $template -p DEV_PROJECT=$DEV_PROJECT -p STAGE_PROJECT=$STAGE_PROJECT -p CICD_PROJECT=$CICD_PROJECT -p APP_NAME=$APP_NAME  -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -p REPO_URL=$REPO_URL -p REPO_REF=$REPO_REF | oc create -f - -n $CICD_PROJECT
+  oc process -f $template -p DEV_PROJECT=$DEV_PROJECT -p STAGE_PROJECT=$STAGE_PROJECT -p CICD_PROJECT=$CICD_PROJECT -p APP_NAME=$APP_NAME  -p QUAY_USERNAME=$QUAY_USER -p QUAY_PASSWORD=$QUAY_PASS -p QUAY_REPO=$QUAY_REPO -p REPO_URL=$REPO_URL -p REPO_REF=$REPO_REF | oc create -f - -n $CICD_PROJECT
 }
 
 function setup_applications() {
@@ -189,7 +189,7 @@ function setup_applications() {
 
 	# setup cisco-dev env
     oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username=$QUAY_USER --docker-password=$QUAY_PASS -n $DEV_PROJECT
-    oc new-build python~$REPO_URL --name=$APP_NAME --push-secret=quay-secret --to-docker --to="quay.io/hsaid4327/$APP_NAME" -n $DEV_PROJECT
+    oc new-build python~$REPO_URL --name=$APP_NAME --push-secret=quay-secret --to-docker --to="quay.io/$QUAY_REPO/$APP_NAME" -n $DEV_PROJECT
     oc secrets link default quay-secret --for=pull -n $DEV_PROJECT
     oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:latest --allow-missing-images -n $DEV_PROJECT
     oc expose svc $APP_NAME -n $DEV_PROJECT
