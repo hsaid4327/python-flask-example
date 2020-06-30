@@ -162,7 +162,7 @@ template="cisco-cicd-template.yaml"
 
 
 function setup_projects() {
-  echo_header setup_projects
+  echo_header "Setting up projects"
   oc new-project  $DEV_PROJECT   --display-name="$ARG_PROJECT_SUFFIX - Dev"
   oc  new-project $STAGE_PROJECT --display-name="$ARG_PROJECT_SUFFIX - Stage"
   oc  new-project $CICD_PROJECT  --display-name="CI/CD"
@@ -178,7 +178,7 @@ function setup_projects() {
 }
 
 function setup_applications() {
-    echo_header setup_applications
+    echo_header "Setting up Openshift application resources"
     oc new-app jenkins-persistent -n $CICD_PROJECT
     sleep 2
 
@@ -191,24 +191,29 @@ function setup_applications() {
 
 
 	# setup cisco-dev env
+    echo_header "Creating application resources in $DEV_PROJECT"
     oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username=$QUAY_USER --docker-password=$QUAY_PASS -n $DEV_PROJECT
     oc new-build python~$REPO_URL --name=$APP_NAME --push-secret=quay-secret --to-docker --to="quay.io/$QUAY_REPO/$APP_NAME" -n $DEV_PROJECT
     oc secrets link default quay-secret --for=pull -n $DEV_PROJECT
     oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:latest --allow-missing-images -n $DEV_PROJECT
+    sleep 2
     oc expose svc $APP_NAME -n $DEV_PROJECT
     oc set triggers dc $APP_NAME --remove-all -n $DEV_PROJECT
-    oc patch dc $APP_NAME -p '{"spec": {"template": {"spec": {"containers": [{"name": "$APP_NAME", "imagePullPolicy": "Always"}]}}}}' -n $DEV_PROJECT
+    oc patch dc $APP_NAME -p '{"spec": {"template": {"spec": {"containers": [{"name": "'$APP_NAME'", "imagePullPolicy": "Always"}]}}}}' -n $DEV_PROJECT
     oc set probe dc/$APP_NAME --readiness --get-url=http://:8080/hello --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10 -n $DEV_PROJECT
     oc set probe dc/$APP_NAME --liveness  --get-url=http://:8080 --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=10 -n $DEV_PROJECT
 	  oc rollout cancel dc/$APP_NAME -n $DEV_PROJECT
 
     # cisco-stage
+      echo_header "Creating application resources in $STAGE_PROJECT"
     oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username="$QUAY_USER" --docker-password="$QUAY_PASS" -n $STAGE_PROJECT
     oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:stage --allow-missing-images -n $STAGE_PROJECT
-    oc expose svc $APP_NAME -n $STAGE_PROJECT
+    sleep 5
+    oc expose dc $APP_NAME --port=8080 -n $STAGE_PROJECT
+    oc expose svc $APP_NAME
     oc set triggers dc $APP_NAME --remove-all -n $STAGE_PROJECT
-    oc patch dc $APP_NAME -p '{"spec": {"template": {"spec": {"containers": [{"name": "$APP_NAME", "imagePullPolicy": "Always"}]}}}}' -n $STAGE_PROJECT
-    oc delete is $APP_NAME -n $STAGE_PROJECT
+    oc patch dc $APP_NAME -p '{"spec": {"template": {"spec": {"containers": [{"name": "'$APP_NAME'", "imagePullPolicy": "Always"}]}}}}' -n $STAGE_PROJECT
+
     oc secrets link default quay-secret --for=pull -n $STAGE_PROJECT
     oc set probe dc/$APP_NAME --readiness --get-url=http://:8080/hello --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10 -n $STAGE_PROJECT
     oc set probe dc/$APP_NAME --liveness  --get-url=http://:8080 --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=10 -n $STAGE_PROJECT
