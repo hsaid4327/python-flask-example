@@ -183,8 +183,8 @@ function setup_applications() {
     sleep 2
 
     #cicd
-    oc set resources dc/jenkins --limits=cpu=2,memory=4Gi --requests=cpu=1,memory=1Gi
-	  oc label dc jenkins app=jenkins --overwrite
+    oc set resources dc/jenkins --limits=cpu=2,memory=4Gi --requests=cpu=1,memory=1Gi -n $CICD_PROJECT
+	  oc label dc jenkins app=jenkins --overwrite -n $CICD_PROJECT
     oc create secret generic quay-cicd-secret --from-literal="username=$QUAY_USER" --from-literal="password=$QUAY_PASS" -n $CICD_PROJECT
     oc label secret quay-cicd-secret credential.sync.jenkins.openshift.io=true -n $CICD_PROJECT
 
@@ -196,7 +196,7 @@ function setup_applications() {
     #oc new-build python~$REPO_URL --name=$APP_NAME --push-secret=quay-secret --to-docker --to="quay.io/$QUAY_REPO/$APP_NAME:latest" -n $DEV_PROJECT
     #oc secrets link default quay-secret --for=pull -n $DEV_PROJECT
     #oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:latest --allow-missing-images -n $DEV_PROJECT
-    oc new-app python:latest~$REPO_URL --name=$APP_NAME
+    oc new-app python:latest~$REPO_URL --name=$APP_NAME -n $DEV_PROJECT
     sleep 2
     oc expose svc $APP_NAME -n $DEV_PROJECT
     oc set triggers dc $APP_NAME --remove-all -n $DEV_PROJECT
@@ -206,17 +206,17 @@ function setup_applications() {
 	  oc rollout cancel dc/$APP_NAME -n $DEV_PROJECT
 
     # cisco-stage
-      echo_header "Creating application resources in $STAGE_PROJECT"
+    echo_header "Creating application resources in $STAGE_PROJECT"
     oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username="$QUAY_USER" --docker-password="$QUAY_PASS" -n $STAGE_PROJECT
+    oc secrets link default quay-secret --for=pull -n $STAGE_PROJECT
     oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:stage --allow-missing-images -n $STAGE_PROJECT
-
     oc expose dc $APP_NAME --port=8080 -n $STAGE_PROJECT
     sleep 5
     oc expose svc $APP_NAME -n $STAGE_PROJECT
     oc set triggers dc $APP_NAME --remove-all -n $STAGE_PROJECT
     oc patch dc $APP_NAME -p '{"spec": {"template": {"spec": {"containers": [{"name": "'$APP_NAME'", "imagePullPolicy": "Always"}]}}}}' -n $STAGE_PROJECT
 
-    oc secrets link default quay-secret --for=pull -n $STAGE_PROJECT
+
     oc set probe dc/$APP_NAME --readiness --get-url=http://:8080/hello --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10 -n $STAGE_PROJECT
     oc set probe dc/$APP_NAME --liveness  --get-url=http://:8080 --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=10 -n $STAGE_PROJECT
   	oc rollout cancel dc/$APP_NAME -n $STAGE_PROJECT
