@@ -192,8 +192,8 @@ function setup_applications() {
 
 	# setup cisco-dev env
     echo_header "Creating application resources in $DEV_PROJECT"
-    oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username=$QUAY_USER --docker-password=$QUAY_PASS -n $DEV_PROJECT
-    oc new-build python~$REPO_URL --name=$APP_NAME --push-secret=quay-secret --to-docker --to="quay.io/$QUAY_REPO/$APP_NAME" -n $DEV_PROJECT
+    oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username="$QUAY_USER" --docker-password="$QUAY_PASS" -n $DEV_PROJECT
+    oc new-build python~$REPO_URL --name=$APP_NAME --push-secret=quay-secret --to-docker --to="quay.io/$QUAY_REPO/$APP_NAME:latest" -n $DEV_PROJECT
     oc secrets link default quay-secret --for=pull -n $DEV_PROJECT
     oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:latest --allow-missing-images -n $DEV_PROJECT
     sleep 2
