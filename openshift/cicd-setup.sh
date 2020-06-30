@@ -162,6 +162,7 @@ template="cisco-cicd-template.yaml"
 
 
 function setup_projects() {
+  echo_header setup_projects
   oc new-project  $DEV_PROJECT   --display-name="$ARG_PROJECT_SUFFIX - Dev"
   oc  new-project $STAGE_PROJECT --display-name="$ARG_PROJECT_SUFFIX - Stage"
   oc  new-project $CICD_PROJECT  --display-name="CI/CD"
@@ -172,10 +173,12 @@ function setup_projects() {
   oc policy add-role-to-group edit system:serviceaccounts:$CICD_PROJECT -n $STAGE_PROJECT
 
   echo "Using template $template"
+  echo_header "processing template"
   oc process -f $template -p DEV_PROJECT=$DEV_PROJECT -p STAGE_PROJECT=$STAGE_PROJECT -p CICD_PROJECT=$CICD_PROJECT -p APP_NAME=$APP_NAME  -p QUAY_USERNAME=$QUAY_USER -p QUAY_PASSWORD=$QUAY_PASS -p QUAY_REPO=$QUAY_REPO -p REPO_URL=$REPO_URL -p REPO_REF=$REPO_REF | oc create -f - -n $CICD_PROJECT
 }
 
 function setup_applications() {
+    echo_header setup_applications
     oc new-app jenkins-persistent -n $CICD_PROJECT
     sleep 2
 

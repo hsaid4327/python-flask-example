@@ -42,7 +42,7 @@ parameters:
   name: QUAY_PASSWORD
 - displayName: Quay.io Image Repository
   description: Quay.io repository for pushing Tasks container images
-  name: QUAY_REPOSITORY
+  name: QUAY_REPO
   required: true
   value: hsaid4327
 objects:
@@ -86,7 +86,7 @@ objects:
         - name: QUAY_USERNAME
           value: ${QUAY_USERNAME}
         - name: QUAY_REPO
-          value: ${QUAY_REPOSITORY}
+          value: ${QUAY_REPO}
         jenkinsfilePath: Jenkinsfile
       type: JenkinsPipeline
 - apiVersion: v1
