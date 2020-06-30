@@ -208,9 +208,10 @@ function setup_applications() {
       echo_header "Creating application resources in $STAGE_PROJECT"
     oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username="$QUAY_USER" --docker-password="$QUAY_PASS" -n $STAGE_PROJECT
     oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:stage --allow-missing-images -n $STAGE_PROJECT
-    sleep 5
+
     oc expose dc $APP_NAME --port=8080 -n $STAGE_PROJECT
-    oc expose svc $APP_NAME
+    sleep 5
+    oc expose svc/$APP_NAME
     oc set triggers dc $APP_NAME --remove-all -n $STAGE_PROJECT
     oc patch dc $APP_NAME -p '{"spec": {"template": {"spec": {"containers": [{"name": "'$APP_NAME'", "imagePullPolicy": "Always"}]}}}}' -n $STAGE_PROJECT
 
