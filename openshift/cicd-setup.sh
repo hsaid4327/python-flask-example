@@ -192,10 +192,11 @@ function setup_applications() {
 
 	# setup cisco-dev env
     echo_header "Creating application resources in $DEV_PROJECT"
-    oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username="$QUAY_USER" --docker-password="$QUAY_PASS" -n $DEV_PROJECT
-    oc new-build python~$REPO_URL --name=$APP_NAME --push-secret=quay-secret --to-docker --to="quay.io/$QUAY_REPO/$APP_NAME:latest" -n $DEV_PROJECT
-    oc secrets link default quay-secret --for=pull -n $DEV_PROJECT
-    oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:latest --allow-missing-images -n $DEV_PROJECT
+    #oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username="$QUAY_USER" --docker-password="$QUAY_PASS" -n $DEV_PROJECT
+    #oc new-build python~$REPO_URL --name=$APP_NAME --push-secret=quay-secret --to-docker --to="quay.io/$QUAY_REPO/$APP_NAME:latest" -n $DEV_PROJECT
+    #oc secrets link default quay-secret --for=pull -n $DEV_PROJECT
+    #oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:latest --allow-missing-images -n $DEV_PROJECT
+    oc new-app python:latest~$REPO_URL --name=$APP_NAME
     sleep 2
     oc expose svc $APP_NAME -n $DEV_PROJECT
     oc set triggers dc $APP_NAME --remove-all -n $DEV_PROJECT
@@ -211,7 +212,7 @@ function setup_applications() {
 
     oc expose dc $APP_NAME --port=8080 -n $STAGE_PROJECT
     sleep 5
-    oc expose svc/$APP_NAME
+    oc expose svc $APP_NAME -n $STAGE_PROJECT
     oc set triggers dc $APP_NAME --remove-all -n $STAGE_PROJECT
     oc patch dc $APP_NAME -p '{"spec": {"template": {"spec": {"containers": [{"name": "'$APP_NAME'", "imagePullPolicy": "Always"}]}}}}' -n $STAGE_PROJECT
 
