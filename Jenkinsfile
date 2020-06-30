@@ -41,7 +41,7 @@ pipeline {
                   //sh "skopeo copy docker://quay.io/${env.QUAY_REPO}/${env.APP_NAME}:latest docker://quay.io/${env.QUAY_REPO}/${env.APP_NAME}:stage --src-creds \"$QUAY_USER:$QUAY_PWD\" --dest-creds \"$QUAY_USER:$QUAY_PWD\" --src-tls-verify=false --dest-tls-verify=false"
 
                   //sh "skopeo copy docker://default-route-openshift-image-registry.apps.$(oc whoami --show-server | cut -d. -f2- | cut -d: -f1)/${env.DEV_PROJECT}/${env.APP_NAME}:latest docker://quay.io/${env.QUAY_REPO}/${env.APP_NAME}:stage --src-creds \"$(oc whoami)\":\"$(oc whoami -t)\" --dest-creds \"$QUAY_USER:$QUAY_PWD\" --src-tls-verify=false --dest-tls-verify=false"
-                  sh 'skopeo copy docker://default-route-openshift-image-registry.apps.$(oc whoami --show-server | cut -d. -f2- | cut -d: -f1)/${env.DEV_PROJECT}/${env.APP_NAME}:latest docker://quay.io/${env.QUAY_REPO}/${env.APP_NAME}:stage --src-creds \\"$(oc whoami)\\":\\"$(oc whoami -t)\\" --dest-creds \\"$QUAY_USER:$QUAY_PWD\\" --src-tls-verify=false --dest-tls-verify=false'
+                  sh 'skopeo copy docker://default-route-openshift-image-registry.apps.awsocplab01.aztns.com/${env.DEV_PROJECT}/${env.APP_NAME}:latest docker://quay.io/${env.QUAY_REPO}/${env.APP_NAME}:stage --src-creds \\"$(oc whoami)\\":\\"$(oc whoami -t)\\" --dest-creds \\"$QUAY_USER:$QUAY_PWD\\" --src-tls-verify=false --dest-tls-verify=false'
 
                 }
 
