@@ -40,7 +40,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: "${openshift.project()}-quay-cicd-secret", usernameVariable: "QUAY_USER", passwordVariable: "QUAY_PWD")]) {
                   //sh "skopeo copy docker://quay.io/${env.QUAY_REPO}/${env.APP_NAME}:latest docker://quay.io/${env.QUAY_REPO}/${env.APP_NAME}:stage --src-creds \"$QUAY_USER:$QUAY_PWD\" --dest-creds \"$QUAY_USER:$QUAY_PWD\" --src-tls-verify=false --dest-tls-verify=false"
                   sh 'export REGISTRY=default-route-openshift-image-registry.apps.$(oc whoami --show-server | cut -d. -f2- | cut -d: -f1)'
-                  sh "skopeo copy docker://$REGISTRY/${env.DEV_PROJECT}/${env.APP_NAME}:latest docker://quay.io/${env.QUAY_REPO}/${env.APP_NAME}:stage --src-creds \"$(oc whoami)\":\"$(oc whoami -t)\" --dest-creds \"$QUAY_USER:$QUAY_PWD\" --src-tls-verify=false --dest-tls-verify=false"
+                  sh "skopeo copy docker://$REGISTRY/${env.DEV_PROJECT}/${env.APP_NAME}:latest docker://quay.io/${env.QUAY_REPO}/${env.APP_NAME}:stage --src-creds \"$(oc whoami)\":\"$(oc whoami -t)\" --dest-creds \"$QUAY_USER\":\"$QUAY_PWD\" --src-tls-verify=false --dest-tls-verify=false"
 
 
                 }
