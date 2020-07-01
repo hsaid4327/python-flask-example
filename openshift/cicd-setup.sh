@@ -197,10 +197,10 @@ function setup_applications() {
     #oc secrets link default quay-secret --for=pull -n $DEV_PROJECT
     #oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:latest --allow-missing-images -n $DEV_PROJECT
     oc new-app python:latest~$REPO_URL --name=$APP_NAME -n $DEV_PROJECT
-    sleep 2
+    sleep 5
+    oc cancel-build bc $APP_NAME
     oc expose svc $APP_NAME -n $DEV_PROJECT
     oc set triggers dc $APP_NAME --remove-all -n $DEV_PROJECT
-    oc patch dc $APP_NAME -p '{"spec": {"template": {"spec": {"containers": [{"name": "'$APP_NAME'", "imagePullPolicy": "Always"}]}}}}' -n $DEV_PROJECT
     oc set probe dc/$APP_NAME --readiness --get-url=http://:8080/hello --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10 -n $DEV_PROJECT
     oc set probe dc/$APP_NAME --liveness  --get-url=http://:8080 --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=10 -n $DEV_PROJECT
 	  oc rollout cancel dc/$APP_NAME -n $DEV_PROJECT
