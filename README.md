@@ -16,7 +16,7 @@ The user running the bootstrap script must be logged on to the OCP cluster, and 
 The Openshift projects, and resources are created by running the script `openshift/cicd-setup.sh`, provided in the openshift directory. The script requires certain command line parameters.
 To deply the pipeline run:
 ```
- ./cicd-setup.sh deploy --project-suffix my-demo --app-name simpleflask --quay-username <quay-user> \
+./cicd-setup.sh deploy --project-suffix my-demo --app-name simpleflask --quay-username <quay-user>\
                        --quay-password <quay-password> --quay-repo <quay-repo> \ 
                        --repo-url <git_url> --repo-reference master
 ```
@@ -24,11 +24,11 @@ The above script create projects:
 
        ![](images/project-setup.svg?raw=true)
 
-* The openshift application resources:
+The openshift application resources:
       
       ![](images/app-resources.svg?raw=true)
 
-* The application pipeline in the cicd-<app-name> project:
+The application pipeline in the cicd-<app-name> project:
        
        ![](images/application-pipeline.svg?raw=true)
        
