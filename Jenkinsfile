@@ -44,7 +44,7 @@ pipeline {
                   //sh '''registryUser=$(oc whoami)
                       //  registryPasswd=$(oc whoami -t)
                         //skopeo copy docker://default-route-openshift-image-registry.apps.awsocplab01.aztns.com/${env.DEV_PROJECT}/${env.APP_NAME}:latest docker://quay.io/${env.QUAY_REPO}/${env.APP_NAME}:stage --src-creds \\"$registryUser:$registryPasswd\\" --dest-creds \\"$QUAY_USER:$QUAY_PWD\\" --src-tls-verify=false --dest-tls-verify=false'''
-                   sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds \$(oc whoami):\$(oc whoami -t) --dest-creds ${QUAY_USERNAME}:${QUAY_PASSWORD} docker://image-registry.openshift-image-registry.svc.cluster.local:5000/${DEV_PROJECT}/${APP_NAME}:latest docker://quay.io/${QUAY_REPO}/${APP_NAME}:stage"
+                   sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds hsaid:\$(oc whoami -t) --dest-creds ${QUAY_USERNAME}:${QUAY_PASSWORD} docker://image-registry.openshift-image-registry.svc.cluster.local:5000/${DEV_PROJECT}/${APP_NAME}:latest docker://quay.io/${QUAY_REPO}/${APP_NAME}:stage"
                 //}
 
             }
