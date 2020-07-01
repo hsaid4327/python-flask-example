@@ -4,6 +4,7 @@ This repository contains a simply python flask application, and code to setup an
 * [Introduction](#introduction)
 * [Prerequisites](#prerequisites)
 * [Automated Deploy on OpenShift](#automatic-deploy-on-openshift)
+* [Delete Pipeline](#delete-pipeline)
 
 
 
@@ -29,4 +30,9 @@ To deply the pipeline run:
 
 * The application pipeline in the cicd-<app-name> project:
 ![](images/application-pipeline.svg)
-       
+
+## Delete Pipeline
+The delete functionality of the pipeline and application projects is provided by executing:
+```
+./cicd-setup.sh delete --project-suffix <project-suffix>
+```
