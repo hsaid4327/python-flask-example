@@ -20,15 +20,13 @@ To deply the pipeline run:
                        --quay-password <quay-password> --quay-repo <quay-repo> \ 
                        --repo-url <git_url> --repo-reference master
 ```
-The above script create projects:
-
-       ![](images/project-setup.svg?raw=true)
-
-The openshift application resources:
+* The above script create projects:
+![](images/project-setup.svg?raw=true)
       
-      ![](images/app-resources.svg?raw=true)
 
-The application pipeline in the cicd-<app-name> project:
-       
-       ![](images/application-pipeline.svg?raw=true)
+* The openshift application resources:
+![](images/app-resources.svg)
+
+* The application pipeline in the cicd-<app-name> project:
+![](images/application-pipeline.svg)
        
