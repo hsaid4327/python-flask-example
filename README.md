@@ -26,10 +26,10 @@ To deply the pipeline run:
       
 
 * The openshift application resources:
-![](images/app-resources.svg)
+![](images/app-resources.svg?raw=true)
 
 * The application pipeline in the cicd-<app-name> project:
-![](images/application-pipeline.svg)
+![](images/application-pipeline.svg?raw=true)
 
 ## Delete Pipeline
 The delete functionality of the pipeline and application projects is provided by executing:
