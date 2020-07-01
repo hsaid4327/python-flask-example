@@ -8,6 +8,7 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject(env.DEV_PROJECT) {
+              sh "oc set triggers dc $APP_NAME --remove-all -n $DEV_PROJECT"
               openshift.selector("bc", env.APP_NAME).startBuild("--wait=true")
             }
           }
