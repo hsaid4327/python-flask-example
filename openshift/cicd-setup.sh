@@ -211,7 +211,7 @@ function setup_applications() {
     oc create secret docker-registry quay-secret --docker-server=quay.io --docker-username="$QUAY_USER" --docker-password="$QUAY_PASS" -n $STAGE_PROJECT
     oc secrets link default quay-secret --for=pull -n $STAGE_PROJECT
     oc new-app --name=$APP_NAME --docker-image=quay.io/$QUAY_REPO/$APP_NAME:stage --allow-missing-images -n $STAGE_PROJECT
-    oc expose dc $APP_NAME --port=8080 -n $STAGE_PROJECT
+    #oc expose dc $APP_NAME --port=8080 -n $STAGE_PROJECT
     sleep 5
     oc expose svc $APP_NAME -n $STAGE_PROJECT
     oc set triggers dc $APP_NAME --remove-all -n $STAGE_PROJECT
