@@ -13,6 +13,8 @@ function usage() {
     echo
     echo "Example:"
     echo " $0 deploy --project-suffix mydemo --appname=appname --repo-url repourl --repo-reference=master --quary-username uname --quay-password quaypasswd --app-name=appname "
+  
+    echo " $0 delete --project-suffix mydemo"
     echo
     echo "COMMANDS:"
     echo "   deploy                   Set up the demo projects and deploy demo apps"
@@ -148,7 +150,10 @@ while :; do
 
     shift
 done
-
+ if [ -z $ARG_PROJECT_SUFFIX ]; then
+    usage
+    exit 255
+ fi
 DEV_PROJECT=dev-$ARG_PROJECT_SUFFIX
 STAGE_PROJECT=stage-$ARG_PROJECT_SUFFIX
 CICD_PROJECT=cicd-$ARG_PROJECT_SUFFIX
