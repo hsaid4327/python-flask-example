@@ -1,6 +1,0 @@
-#!/bin/bash
-echo "Running customized s2i build:"
-${STI_SCRIPTS_PATH}/assemble
-echo "Fixing the etc permissions:"
-chmod 777 /etc
-cp /opt/app-root/src/*.ini /etc
